@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Form View -->
+        <record model="ir.ui.view" id="print_vins_form_view">
+            <field name="name">print.gawr.form.print_vins</field>
+            <field name="model">print.gawr</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="weight_lb"/>
+                            <field name="weight_kg"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+         <!-- Action/Form  -->
+        <record model="ir.actions.act_window" id="gawr_manager_form_action_window">
+            <field name="name">GAWR</field>
+            <field name="res_model">print.gawr</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="print_vins_form_view"/>
+        </record>
+        <!-- Action/Tree  -->
+        <record model="ir.actions.act_window" id="gawr_manager_log_action_window">
+          <field name="name">GAWR Log</field>
+          <field name="res_model">print.gawr</field>
+          <field name="view_mode">tree,form</field>
+        </record>
+        <!-- Menu Items-->
+        <menuitem name="Vin Generator" id="vin_generator.menu_root" sequence="10"/>
+        <menuitem name="GAWR" id="vin_generator.gawr" parent="vin_generator.menu_root"/>
+        
+        <menuitem name="GAWR Registry" id="vin_generator.gawr_registry" parent="vin_generator.gawr"
+                  action="gawr_manager_log_action_window"/>
+        
+        <menuitem name="New GAWR" id="vin_generator.gawr_new" parent="vin_generator.gawr"
+                  action="gawr_manager_form_action_window"/>
+
+    </data>
+</odoo>

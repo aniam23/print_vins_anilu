@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+      <!-- Form View -->
+    <record model="ir.ui.view" id="print_vin">
+      <field name="name">print_vin.form</field>
+      <field name="model">print.vins</field>
+      <field name="arch" type="xml">
+        <form string="Logistics Document Packages Log">
+          <button name="print_vins" string="Print" type="object"/>
+         
+          <field name="model_hs7" widget="many2many"/>
+        </form>
+       
+      </field>
+    </record>
+    <!-- Action -->
+    <record model="ir.actions.act_window" id="action_print_vin">
+      <field name="name">Vin Print</field>
+      <field name="res_model">print.vins</field>
+      <field name="view_mode">form</field>
+    </record>
+    <!-- Menu Item -->
+    <menuitem id="menu_print_vin_root" name="Print VIN Labels"  />
+    <menuitem id="menu_print_vin" name="Print VIN Labels" parent="menu_print_vin_root" action="action_print_vin" />
+  </data>
+</odoo>

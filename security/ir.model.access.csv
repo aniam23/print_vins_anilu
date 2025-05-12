@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_print_vins,print.vins,model_print_vins,,1,1,1,1
+access_print_manual,print.manual,model_print_manual,,1,1,1,1
+access_print_gawr,print.gawr,model_print_gawr,,1,1,1,1
+access_printer_conf,printer.conf,model_printer_conf,,1,1,1,1
+access_tire_specifications,tire.specifications,model_tire_specifications,,1,1,1,1

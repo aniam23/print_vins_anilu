@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="manual_print_sequence" model="ir.sequence">
+          <field name="name">Manual Print Reference Sequence</field>
+          <field name="code">manual.print.reference</field>     
+          <field name="prefix">VINPRNT/</field>
+        </record>
+        <!-- View Form -->
+        <record id="print_manual_form_view" model="ir.ui.view">
+            <field name="name">print.manual.form</field>
+            <field name="model">print.manual</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="model_trailer"/>
+                            <field name="name_trailer"/>
+                            <field name="wheel"/>
+                            <field name="date"/>
+                            <field name="rin_jante"/>
+                            <field name="dry_weight"/>
+                            <field name="gvwr_related" />
+                            <field name="gawr_related"/>
+                            <field name="tire_typ" readonly="1"/>
+                            <field name="model_year" readonly="1"/>
+                            <field name="axles" readonly="1"/>
+                            <field name="tongue_type" readonly="1"/>
+                            <field name="length" readonly="1"/>
+                            <field name="vin_registry"/>
+                            <button name="print_manual_vins" string="Print" type="object" class="btn-primary"/>
+                            <button 
+                                name="button_assign_trailer_data" 
+                                string="Buscar Datos" 
+                                type="object" 
+                                class="btn-primary" 
+                            />
+                        </group>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action/Form -->
+        <record id="print_manual_form_action_window" model="ir.actions.act_window">
+            <field name="name">AGREGAR DATOS MANUALES</field>
+            <field name="res_model">print.manual</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="print_manual_form_view"/>
+        </record>
+          <!-- Action/Form and Tree -->
+        <record id="print_manual_tree_action_window" model="ir.actions.act_window">
+            <field name="name">REGISTRO DE DATOS MANUALES</field>
+            <field name="res_model">print.manual</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Menu Items  -->
+        <menuitem id="manualdata" name="DATOS MANUALES" parent="vin_generator.menu_root" sequence="10"/>
+        <menuitem id="registrodatos" name="REGISTRO DE DATOS" parent="manualdata"
+                 action="print_manual_tree_action_window" sequence="20"/>
+        <menuitem id="newmanualdata" name="NUEVO REGISTRO" parent="manualdata"
+                 action="print_manual_form_action_window" sequence="30"/>
+    </data>
+</odoo>

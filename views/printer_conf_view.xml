@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Form View -->
+        <record id="view_printer_config_form" model="ir.ui.view">
+            <field name="name">printer.conf.form</field>
+            <field name="model">printer.conf</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="printer_ip"/>
+                            <field name="printer_port"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Tree View -->
+        <record id="view_printer_config_tree" model="ir.ui.view">
+            <field name="name">printer.conf.tree</field>
+            <field name="model">printer.conf</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="printer_ip"/>
+                    <field name="printer_port"/>
+                    <field name="printer_api_url"/>
+                    <field name="active" widget="boolean_button"/>
+                    <field name="sequence" widget="handle"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_printer_config" model="ir.actions.act_window">
+            <field name="name">Configuración de Impresoras</field>
+            <field name="res_model">printer.conf</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'default_active': True}</field>
+        </record>
+
+        <!-- Menu Items -->
+        <menuitem id="menu_print_vin_root"
+                  name="Etiquetas VIN"
+                  web_icon="print_vin_labels,static/description/icon.png"
+                  sequence="10"/>
+        
+        <menuitem id="menu_printer_config"
+                  name="Configuración de Impresoras"
+                  parent="menu_print_vin_root"
+                  action="action_printer_config"
+                  sequence="20"/>
+    </data>
+</odoo>
