@@ -14,7 +14,6 @@ class ManualPrint(models.Model):
     name = fields.Char(string='Referencia')
     name_trailer = fields.Char(string='Nombre del Remolque')
     model_trailer = fields.Char(string="Modelo del Remolque")
-    wheel = fields.Char(string="Llanta")
     dry_weight = fields.Float(string="Peso Total (LBS)")
     gvwr_related = fields.Char(string="GVWR")
     gawr_related = fields.Char(string="GAWR")
@@ -23,7 +22,10 @@ class ManualPrint(models.Model):
     axles = fields.Char(string="Ejes")
     tongue_type = fields.Char(string="Tipo de Jalon ")
     length = fields.Char(string="Longitud")
+    rin = fields.Char(string="Rin")
+    tire_ply= fields.Char(string="Capas de Llanta")
     rin_jante = fields.Char(string="Rin/Jante")
+    type_wheel = fields.Char(string="Tipo de llanta")
     vin_registry = fields.Many2one('vin_generator.vin_generator', string='VIN')
     date = fields.Date(string='Fecha', default=fields.Date.today)
     printer_config_id = fields.Many2one(
@@ -90,18 +92,7 @@ class ManualPrint(models.Model):
                     'tongue_type': template.tongue_type or '',  # Tipo de jalon
                     'length': template.length or '',  # Longitud del remolque
                 })
-                # Busca la lista de materiales del producto
-                bom = self.env['mrp.bom'].search([
-                    ('product_tmpl_id', '=', template.id)  
-                ], limit=1)  
-                # Si existe una lista de materiales 
-                if bom:
-                    # Filtra las líneas del BOM para encontrar componentes de llantas
-                    wheels = bom.bom_line_ids.filtered(
-                        lambda l: 'llanta' in l.product_id.name.lower()  # Busca 'llanta' en el nombre
-                    )
-                    # Asigna el nombre de la primera llanta encontrada (o cadena vacía si no hay)
-                    record.wheel = wheels[0].product_id.name if wheels else ''
+               
 
     def get_active_printer(self):
         """Get the active printer from the printer.conf model
@@ -134,56 +125,45 @@ class ManualPrint(models.Model):
             raise UserError(f"Error de conexión con la impresora: {str(e)}")
     
     def set_tire_ratings(self, specs):
-        """Assigns technical specifications based on the rim (wheel field)
-            :param specs: Dictionary to store the tire ratings
+        """Assigns tire specifications based on the rim, tire_ply, and wheel_type fields.
+        :param specs: Dictionary where 'tire_rating', 'lbs_wheels', and 'rim' will be assigned
         """
-        # inicializa las variables de especificaciones de llantas
-        specs['tire_rating'] 
-        specs['lbs_wheels'] 
-        specs['rin'] = ''
-        # si no encuentra el campo wheel
-        if not self.wheel:
-            return # Evita seguir buscando innecesariamente cuando ya encontramos el campo.
-        #si encuentra el campo wheel lo divide en partes para obtener informacion especifica  de la llanta
-        wheel_info = self.wheel.upper().split()
-        # Extrae el rin y el tipo de ply de la información de la llanta
-        if 'LLANTA' in wheel_info:
-            llanta_index = wheel_info.index('LLANTA')
-            if llanta_index + 1 < len(wheel_info):
-                specs['rin'] = wheel_info[llanta_index + 1]
-                ply_match = wheel_info[llanta_index + 2]
-        # Determina el tipo de llanta 
-        tire_type = 'DUAL' if 'DUAL' in wheel_info else 'SS' if 'SS' in wheel_info else ''
-        # si no encuentra el tipo de llanta
-        if not ply_match:
-            return # Evita seguir buscando innecesariamente cuando ya encontramos el campo
-        #manda llamar las variables de rin y ply de la llanta
-        ply_pr = ply_match
-        rin = specs['rin']
+        specs['tire_rating'] = ''
+        specs['lbs_wheels'] = ''
+        specs['rin'] = self.rin or ''
 
-        # busca coincidencias en el modelo tire.specifications  basadose en el rin, el tipo de llanta y el ply
+        # Asegúra que todos los campos requeridos existen
+        if not self.rin or not self.tire_ply:
+            return
+        #convierte a mayusculas y elimina espacios en blanco
+        rin = (self.rin or '').strip().upper()
+        ply_pr = (self.tire_ply or '').strip().upper()
+        tire_type = (self.type_wheel or '').strip().upper()  
+        # Obtener el mapa de especificaciones de llantas desde el modelo
         ratings_map = self.env['tire.specifications'].get_ratings_map()
 
-        # si encuentra exactamente el rin, el tipo de llanta y el ply
+        # Búsqueda exacta
         if rin in ratings_map:
-            if tire_type in ratings_map[rin]:
-                if ply_pr in ratings_map[rin][tire_type]:
-                    specs['tire_rating'], specs['lbs_wheels'] = ratings_map[rin][tire_type][ply_pr] #agrega los valores de tire_rating y lbs_wheels
-                    return #Asegura que el método termine justo después de encontrar la coincidencia más específica
+            tire_types = ratings_map[rin]
+            # Si no se encontró type_wheel
+            if tire_type in tire_types:
+                ply_dict = tire_types[tire_type]
+                if ply_pr in ply_dict:
+                    #agrega los valores a tire_rating y lbs_wheels
+                    specs['tire_rating'], specs['lbs_wheels'] = ply_dict[ply_pr]
+                    return
 
-        
-       # Itera sobre todos los rin disponibles en el mapa de especificaciones
-        for available_rin in ratings_map:
-            # Compara si el rin actual coincide total o parcialmente con el rin buscado
+        # Búsqueda flexible 
+        for available_rin, tire_types in ratings_map.items():
             if available_rin in rin or rin in available_rin:
-                # Verifica si el tipo de llanta (DUAL/SS) existe para este rin
-                if tire_type in ratings_map[available_rin]:
-                    # Busca si el ply/PR específico existe para este tipo de llanta
-                    if ply_pr in ratings_map[available_rin][tire_type]:
-                        # Asigna los valores encontrados a las variables de especificaciones de llantas
-                        specs['tire_rating'], specs['lbs_wheels'] = ratings_map[available_rin][tire_type][ply_pr]
-                        # Termina la función inmediatamente al encontrar la primera coincidencia válida
+                # Si no se encontró type_wheel
+                if tire_type in tire_types:
+                    ply_dict = tire_types[tire_type]
+                    if ply_pr in ply_dict:
+                        #agrega los valores a tire_rating y lbs_wheels
+                        specs['tire_rating'], specs['lbs_wheels'] = ply_dict[ply_pr]
                         return
+
 
     def prepare_api_data(self, weight_kg=None):
         """
@@ -270,3 +250,4 @@ class ManualPrint(models.Model):
                 'sticky': False,
             }
         }
+

@@ -17,8 +17,10 @@
                             <field name="name" readonly="1"/>
                             <field name="model_trailer"/>
                             <field name="name_trailer"/>
-                            <field name="wheel"/>
                             <field name="date"/>
+                            <field name="rin"/>
+                            <field name="tire_ply"/>
+                            <field name="type_wheel"/>
                             <field name="rin_jante"/>
                             <field name="dry_weight"/>
                             <field name="gvwr_related" />
