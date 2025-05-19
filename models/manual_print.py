@@ -14,18 +14,61 @@ class ManualPrint(models.Model):
     name = fields.Char(string='Referencia')
     name_trailer = fields.Char(string='Nombre del Remolque')
     model_trailer = fields.Char(string="Modelo del Remolque")
-    dry_weight = fields.Float(string="Peso Total (LBS)")
-    gvwr_related = fields.Char(string="GVWR")
-    gawr_related = fields.Char(string="GAWR")
+    dry_weight = fields.Float(
+        string="Peso Total (LBS)",
+        digits=(16, 2),
+        help="Ingrese solo valores numéricos con punto decimal (ej: 25.50)."
+    )
+    gvwr_related = fields.Many2one('vin_generator.gvwr_manager', string='GVWR')
+    gawr_related = fields.Many2one('print.gawr', string='GAWR')
     tire_typ = fields.Char(string="Tipo de Llanta")
     model_year = fields.Char(string="Año")
     axles = fields.Char(string="Ejes")
     tongue_type = fields.Char(string="Tipo de Jalon ")
     length = fields.Char(string="Longitud")
-    rin = fields.Char(string="Rin")
-    tire_ply= fields.Char(string="Capas de Llanta")
-    rin_jante = fields.Char(string="Rin/Jante")
-    type_wheel = fields.Char(string="Tipo de llanta")
+    rin = fields.Selection(
+        selection=[
+            ('ST205/75R15', 'ST205/75R15'),
+            ('ST225/75R15', 'ST225/75R15'),
+            ('ST235/80R16', 'ST235/80R16'),
+            ('ST235/85R16', 'ST235/85R16'),
+            ('235235/75R17,5', '235235/75R17,5'),
+            ('8235/75R17,5', '8235/75R17,5')
+        ],
+        string='Rin',
+    )
+    tire_ply = fields.Selection(
+        selection=[
+            ('6PLY', '6PLY'),
+            ('6PR', '6PR'),
+            ('8PLY', '8PLY'),
+            ('8PR', '8PR'),
+            ('10PLY', '10PLY'),
+            ('10PR', '10PR'),
+            ('14PLY', '14PLY'),
+            ('14PR', '14PR'),
+            ('18PLY', '18PLY'),
+            ('18PR', '18PR'),
+        ],
+        string='Capas de Llanta',
+    )
+    rin_jante = fields.Selection(
+        selection=[
+            ('15X5', '15X5'),
+            ('15X6', '15X6'),
+            ('16X6', '16X6'),
+            ('17,5X6', '17,5X6'),
+        ],
+        string='Rin/Jante',
+    )
+    type_wheel = fields.Selection(
+        selection=[
+            ('DUAL', 'DUAL'),
+            ('SS', 'SS'),
+            ('', ''),
+        ],
+        string='Tipo de llanta',
+    )
     vin_registry = fields.Many2one('vin_generator.vin_generator', string='VIN')
     date = fields.Date(string='Fecha', default=fields.Date.today)
     printer_config_id = fields.Many2one(
@@ -51,22 +94,33 @@ class ManualPrint(models.Model):
 
     def extract_numeric_value(self, value):
         """Extracts the numeric value from a string and returns it as a float
-            :param value: String value to extract the numeric value from.
-            :return: The numeric value as a float."""
-         # Validación de entrada
-        if not value or str(value).strip() == '':
+        :param value: String value to extract the numeric value from.
+        :return: The numeric value as a float."""
+
+        # Validación de entrada
+        if not value or str(value).strip() == '':  
             raise UserError("Error: No se proporcionó ningún valor para extraer el número")
-        # Búsqueda de patrones numéricos (incluye decimales y comas)
-        numbers = re.findall(r'[\d,\.]+', str(value))
+
+        # Búsqueda de patrones numéricos (incluye decimales correctamente formados)
+        matches = re.findall(r'-?\d+\.?\d*', str(value))
+
         # Validación de resultados
-        if not numbers:
-            raise UserError(f"Error: No se encontró ningún valor numérico en: '{value}'")
-        # Limpieza y conversión del valor
+        if not matches:
+            raise UserError(f"Error: No se encontró ningún valor numérico válido en: '{value}'")
+
+        # Tomamos el primer match (por si hay varios números en el string)
+        numeric_str = matches[0]
+
+        # Validamos que sea un número válido (solo un punto decimal)
+        if numeric_str.count('.') > 1:
+            raise UserError(f"Error: El valor contiene múltiples puntos decimales: '{numeric_str}'")
+
         try:
-            numeric_value = numbers[0].replace(',', '')  
-            return float(numeric_value)
+            # Reemplazamos comas por puntos si es necesario (para formato europeo)
+            numeric_str = numeric_str.replace(',', '.')
+            return float(numeric_str)
         except ValueError:
-            raise UserError(f"Error: El valor extraído no es numérico válido: '{numbers[0]}'")
+            raise UserError(f"Error: El valor extraído no es numérico válido: '{numeric_str}'")
 
     def button_assign_trailer_data(self):
         """Assign all trailer data from product.template"""
